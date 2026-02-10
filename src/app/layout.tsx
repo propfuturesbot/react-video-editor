@@ -1,12 +1,8 @@
 import { Geist_Mono, Geist } from "next/font/google";
 import { Toaster } from "@/components/ui/sonner";
 import { baseUrl, createMetadata } from "@/utils/metadata";
-import {
-  StoreInitializer,
-  BackgroundUploadRunner
-} from "@/components/store-initializer";
+import { StoreInitializer } from "@/components/store-initializer";
 import { QueryProvider } from "@/components/query-provider";
-import { Analytics } from "@vercel/analytics/react";
 import { Outfit } from "next/font/google";
 
 import "./globals.css";
@@ -30,10 +26,10 @@ const outfit = Outfit({
 
 export const metadata = createMetadata({
   title: {
-    template: "%s | Combo",
-    default: "Combo"
+    template: "%s | CourseForge Video Editor",
+    default: "CourseForge Video Editor"
   },
-  description: "AI Video generator for the next gen web.",
+  description: "AI-powered video editor for course creation.",
   metadataBase: baseUrl
 });
 
@@ -50,10 +46,8 @@ export default async function RootLayout({
         <QueryProvider>
           {children}
           <StoreInitializer />
-          <BackgroundUploadRunner />
           <Toaster />
         </QueryProvider>
-        <Analytics />
       </body>
     </html>
   );

@@ -36,12 +36,14 @@ export default function Navbar({
   user,
   stateManager,
   setProjectName,
-  projectName
+  projectName,
+  isEmbedded = false
 }: {
   user: any | null;
   stateManager: StateManager;
   setProjectName: (name: string) => void;
   projectName: string;
+  isEmbedded?: boolean;
 }) {
   const [title, setTitle] = useState(projectName);
   const isLargeScreen = useIsLargeScreen();
@@ -127,22 +129,32 @@ export default function Navbar({
 
       <div className="flex h-11 items-center justify-end gap-2">
         <div className=" pointer-events-auto flex h-10 items-center gap-2 rounded-md px-2.5">
-          <Link href="https://discord.gg/Jmxsd5f2jp" target="_blank">
-            <Button className="h-7 rounded-lg" variant={"outline"}>
-              <LogoIcons.discord className="w-6 h-6" />
-              <span className="hidden md:block">Join Us</span>
-            </Button>
-          </Link>
-          <Button
-            className="flex h-7 gap-1 border border-border"
-            variant="outline"
-            size={isMediumScreen ? "sm" : "icon"}
-          >
-            <ShareIcon width={18} />{" "}
-            <span className="hidden md:block">Share</span>
-          </Button>
+          {/* Hide export/share controls when embedded in CourseForge iframe */}
+          {!isEmbedded && (
+            <>
+              <Link href="https://discord.gg/Jmxsd5f2jp" target="_blank">
+                <Button className="h-7 rounded-lg" variant={"outline"}>
+                  <LogoIcons.discord className="w-6 h-6" />
+                  <span className="hidden md:block">Join Us</span>
+                </Button>
+              </Link>
+              <Button
+                className="flex h-7 gap-1 border border-border"
+                variant="outline"
+                size={isMediumScreen ? "sm" : "icon"}
+              >
+                <ShareIcon width={18} />{" "}
+                <span className="hidden md:block">Share</span>
+              </Button>
 
-          <DownloadPopover stateManager={stateManager} />
+              <DownloadPopover stateManager={stateManager} />
+            </>
+          )}
+          {isEmbedded && (
+            <div className="text-xs text-muted-foreground px-2">
+              Export via CourseForge
+            </div>
+          )}
         </div>
       </div>
     </div>

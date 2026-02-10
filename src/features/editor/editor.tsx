@@ -38,7 +38,7 @@ const stateManager = new StateManager({
 	},
 });
 
-const Editor = ({ tempId, id }: { tempId?: string; id?: string }) => {
+const Editor = ({ tempId, id, isEmbedded = false }: { tempId?: string; id?: string; isEmbedded?: boolean }) => {
 	const [projectName, setProjectName] = useState<string>("Untitled video");
 	const { scene } = useSceneStore();
 	const timelinePanelRef = useRef<ImperativePanelHandle>(null);
@@ -59,9 +59,13 @@ const Editor = ({ tempId, id }: { tempId?: string; id?: string }) => {
 
 	const { setCompactFonts, setFonts } = useDataState();
 
+	// Only load mock data if not embedded and no project ID provided
+	// When embedded (iframe mode) or with a project ID, the page.tsx loads the real data
 	useEffect(() => {
-		dispatch(DESIGN_LOAD, { payload: design });
-	}, []);
+		if (!isEmbedded && !id) {
+			dispatch(DESIGN_LOAD, { payload: design });
+		}
+	}, [isEmbedded, id]);
 
 	useEffect(() => {
 		setCompactFonts(getCompactFontData(FONTS));
@@ -141,6 +145,7 @@ const Editor = ({ tempId, id }: { tempId?: string; id?: string }) => {
 				user={null}
 				stateManager={stateManager}
 				setProjectName={setProjectName}
+				isEmbedded={isEmbedded}
 			/>
 			<div className="flex flex-1">
 				{isLargeScreen && (

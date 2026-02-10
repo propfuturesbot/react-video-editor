@@ -1,61 +1,39 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
-export async function POST(request: Request) {
+const COURSEFORGE_API = process.env.COURSEFORGE_API_URL || "http://localhost:8080";
+
+export async function POST(request: NextRequest) {
   try {
-    const body = await request.json(); // Parse the request body
+    const body = await request.json();
+    const authHeader = request.headers.get("Authorization");
 
-    // Step 1: Create project using the new API
-    const projectResponse = await fetch(
-      "https://api.designcombo.dev/v1/projects",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${process.env.COMBO_SK}`
-        },
-        body: JSON.stringify(body)
-      }
-    );
+    // Forward render request to CourseForge backend
+    const response = await fetch(`${COURSEFORGE_API}/api/v1/videos/render`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...(authHeader && { Authorization: authHeader }),
+      },
+      body: JSON.stringify({
+        scenes: body.scenes,
+        projectId: body.projectId,
+        timeline: body.timeline,
+        trackItemsMap: body.trackItemsMap,
+      }),
+    });
 
-    if (!projectResponse.ok) {
-      const projectError = await projectResponse.json();
+    if (!response.ok) {
+      const errorData = await response.json();
       return NextResponse.json(
-        { message: projectError?.message || "Failed to create project" },
-        { status: projectResponse.status }
+        { message: errorData?.message || "Failed to start render" },
+        { status: response.status }
       );
     }
 
-    const projectData = await projectResponse.json();
-    const projectId = projectData.project.id;
-    console.log("Project created:", projectId);
-
-    // Step 2: Initialize export
-    const exportResponse = await fetch(
-      `https://api.designcombo.dev/v1/projects/${projectId}/export`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${process.env.COMBO_SK}`
-        }
-      }
-    );
-
-    if (!exportResponse.ok) {
-      const exportError = await exportResponse.json();
-      return NextResponse.json(
-        { message: exportError?.message || "Failed to initialize export" },
-        { status: exportResponse.status }
-      );
-    }
-
-    const exportData = await exportResponse.json();
-    console.log("Export initialized:", exportData);
-
-    // Return the export data with the render ID for status checking
-    return NextResponse.json(exportData, { status: 200 });
+    const data = await response.json();
+    return NextResponse.json(data, { status: 200 });
   } catch (error) {
-    console.error(error);
+    console.error("Render error:", error);
     return NextResponse.json(
       { message: "Internal server error" },
       { status: 500 }
@@ -63,33 +41,34 @@ export async function POST(request: Request) {
   }
 }
 
-export async function GET(request: Request) {
+export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const type = searchParams.get("type");
     const id = searchParams.get("id");
+    const authHeader = request.headers.get("Authorization");
+
     if (!id) {
       return NextResponse.json(
         { message: "id parameter is required" },
         { status: 400 }
       );
     }
-    if (!type) {
-      return NextResponse.json(
-        { message: "type parameter is required" },
-        { status: 400 }
-      );
-    }
 
-    const response = await fetch(`https://api.combo.sh/v1/render/${id}`, {
-      headers: {
-        Authorization: `Bearer ${process.env.COMBO_SH_JWT}` // JWT Token from environment
+    // Check render status from CourseForge backend
+    const response = await fetch(
+      `${COURSEFORGE_API}/api/v1/videos/jobs/${id}/status`,
+      {
+        headers: {
+          ...(authHeader && { Authorization: authHeader }),
+        },
+        cache: "no-store",
       }
-    });
+    );
 
     if (!response.ok) {
+      const errorData = await response.json();
       return NextResponse.json(
-        { message: "Failed to fetch export status" },
+        { message: errorData?.message || "Failed to get render status" },
         { status: response.status }
       );
     }
@@ -97,7 +76,7 @@ export async function GET(request: Request) {
     const statusData = await response.json();
     return NextResponse.json(statusData, { status: 200 });
   } catch (error) {
-    console.error(error);
+    console.error("Render status error:", error);
     return NextResponse.json(
       { message: "Internal server error" },
       { status: 500 }

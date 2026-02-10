@@ -1,10 +1,15 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
+
+const COURSEFORGE_API = process.env.COURSEFORGE_API_URL || "http://localhost:8080";
+
 export async function GET(
-  request: Request,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { id } = await params;
+    const authHeader = request.headers.get("Authorization");
+
     if (!id) {
       return NextResponse.json(
         { message: "id parameter is required" },
@@ -12,33 +17,30 @@ export async function GET(
       );
     }
 
-    // For the new API, we need to check the export status
-    // The ID passed here should be the render ID from the export response
+    // Check render status from CourseForge backend
     const response = await fetch(
-      `https://api.designcombo.dev/v1/projects/render/${id}/status`,
+      `${COURSEFORGE_API}/api/v1/videos/jobs/${id}/status`,
       {
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${process.env.COMBO_SK}`
+          ...(authHeader && { Authorization: authHeader }),
         },
-        cache: "no-store"
+        cache: "no-store",
       }
     );
 
-    const statusData = await response.json();
-
     if (!response.ok) {
-      const error = new Error(
-        statusData?.message || "Failed to get export status"
+      const errorData = await response.json();
+      return NextResponse.json(
+        { message: errorData?.message || "Failed to get render status" },
+        { status: response.status }
       );
-      (error as any).status = response.status;
-      throw error;
     }
 
+    const statusData = await response.json();
     return NextResponse.json(statusData, { status: 200 });
-  } catch (error: any) {
-    console.error(error);
-
+  } catch (error) {
+    console.error("Render status error:", error);
     return NextResponse.json(
       { message: "Internal server error" },
       { status: 500 }

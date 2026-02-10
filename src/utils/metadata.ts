@@ -6,17 +6,14 @@ export function createMetadata(override: Metadata): Metadata {
     openGraph: {
       title: override.title ?? undefined,
       description: override.description ?? undefined,
-      url: "https://designcombo.dev",
-      images: "/banner.png",
-      siteName: "Combo",
+      url: "https://courseforge.ai",
+      siteName: "CourseForge Video Editor",
       ...override.openGraph
     },
     twitter: {
       card: "summary_large_image",
-      creator: "@Combo",
       title: override.title ?? undefined,
       description: override.description ?? undefined,
-      images: "/banner.png",
       ...override.twitter
     },
     icons: {
@@ -27,5 +24,5 @@ export function createMetadata(override: Metadata): Metadata {
 
 export const baseUrl =
   process.env.NODE_ENV === "development"
-    ? new URL("http://localhost:3000")
-    : new URL("https://designcombo.dev");
+    ? new URL("http://localhost:4000")
+    : new URL("https://courseforge.ai");
